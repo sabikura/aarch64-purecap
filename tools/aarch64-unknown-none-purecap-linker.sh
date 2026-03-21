@@ -2,4 +2,8 @@
 
 : "${CHERI_HOME:=$HOME/cheri}"
 
-exec "$CHERI_HOME/output/morello-sdk/bin/clang --sysroot $CHERI_HOME/output/rootfs-morello-purecap/ -target aarch64-unknown-none -march=morello+c64 -mabi=purecap" "$@"
+# TODO: Investigate why clang failed to link here?
+#
+# exec "$CHERI_HOME/output/morello-sdk/bin/clang" -target aarch64-none-elf -march=morello+c64 -mabi=purecap "$@"
+
+exec "$CHERI_HOME/output/morello-sdk/bin/ld.lld" "$@"

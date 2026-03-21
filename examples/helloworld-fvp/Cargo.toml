@@ -1,0 +1,7 @@
+[package]
+name = "helloworld-fvp"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies.aarch64-purecap-rt]
+path = "../.."
