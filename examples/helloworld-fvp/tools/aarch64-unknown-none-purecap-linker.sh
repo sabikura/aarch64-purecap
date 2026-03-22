@@ -1,0 +1,1 @@
+../../../tools/aarch64-unknown-none-purecap-linker.sh
