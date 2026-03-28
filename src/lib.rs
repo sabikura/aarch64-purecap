@@ -1,5 +1,3 @@
 #![no_std]
 
-pub fn add(a: u32, b: u32) -> u32 {
-    a + b
-}
+pub use aarch64_purecap_rt_macros::entry;
