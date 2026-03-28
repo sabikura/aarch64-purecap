@@ -5,3 +5,11 @@ version = 3
 [[package]]
 name = "aarch64-purecap-rt"
 version = "0.1.0"
+dependencies = [
+ "aarch64-purecap-rt-macros",
+]
+
+[[package]]
+name = "aarch64-purecap-rt-macros"
+version = "0.1.0"
+source = "git+ssh://git@git.sr.ht/~irina/aarch64-purecap-rt-macros?branch=master#f5d425db280d56e3bca790efd2e20a87180d39d9"

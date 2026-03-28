@@ -7,6 +7,8 @@ the CHERI extension, i.e. Arm Morello architecture.
 
 ### Getting the compiler
 
+TODO: Add config.toml in `./compiler`
+
 First things first, the support for Arm Morello in `rustc` is not yet upstreamed.
 This repository contains a patch for adding support for the `aarch64-unknown-none-purecap` target
 triple. The "support" I added is just a config file because the current state had only FreeBSD
@@ -32,7 +34,7 @@ The instructions on building the compiler are found in `rust/README.md` in the *
 and additional helpful information is in `rust/CHERI-NOTES.md`.
 
 > **Important:**
-> One key thing you have to do is make sure you build the `core` library using: `./x.py build library/core` and `cargo`
+> One key thing you have to do is make sure you build the `core` library using: `./x.py build library` and `cargo`
 using `./x.py build tools/cargo`.
 
 ### Building the crate
