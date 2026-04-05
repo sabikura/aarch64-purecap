@@ -12,7 +12,7 @@ dependencies = [
 [[package]]
 name = "aarch64-purecap-rt-macros"
 version = "0.1.0"
-source = "git+ssh://git@git.sr.ht/~irina/aarch64-purecap-rt-macros?branch=master#ad1dfa98141a5890ea5f726ed4f2c34b5b5a0389"
+source = "git+ssh://git@git.sr.ht/~irina/aarch64-purecap-rt-macros?branch=master#4f4f335a089891e81d4c4e4e19ba13866e3d9d40"
 dependencies = [
  "proc-macro2",
  "quote",

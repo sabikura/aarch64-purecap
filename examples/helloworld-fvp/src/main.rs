@@ -5,7 +5,7 @@ use aarch64_purecap_rt::entry;
 mod pl011;
 
 #[entry]
-fn _main() -> ! {
+fn main() -> ! {
     loop {}
 }
 
