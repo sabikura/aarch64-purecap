@@ -1,19 +1,73 @@
+//! TODO: Document this crate and usage
 #![no_std]
 
 pub use aarch64_purecap_rt_macros::entry;
 
-// Sets up the stacks
+// EL1 vector table
 core::arch::global_asm!(
     r#"
-    .section .text._stack_setup
-    .global _stack_setup
-    .type _stack_setup, %function
-    _stack_setup:
-        mov x0, xzr // PLACEHOLDER
+    .section .vectors.el1
+    .global _el1_vectors
+    .macro ventry  label
+    .align  7
+    b \label
+    .endm
+    .align 11
+    _el1_vectors:
+        ventry _invalid_entry
+        ventry _invalid_entry 
+        ventry _invalid_entry 
+        ventry _invalid_entry 
+
+        ventry el1_sync
+        ventry el1_irq
+        ventry _invalid_entry 
+        ventry _invalid_entry 
+
+        ventry el0_sync
+        ventry el0_irq
+        ventry _invalid_entry 
+        ventry _invalid_entry 
+
+        ventry _invalid_entry 
+        ventry _invalid_entry 
+        ventry _invalid_entry 
+        ventry _invalid_entry 
     "#
 );
 
-// EL2 entry code (it sets up the system registers and then jumps to EL1)
+core::arch::global_asm!(
+    r#"
+    .section .text
+    .global _invalid_entry
+    _invalid_entry:
+        b .
+    "#
+);
+
+core::arch::global_asm!(
+    r#"
+    .section .text.el1_entry
+    .global _el1_entry
+    .type _el1_entry, %function
+    _el1_entry:
+        // TODO: Move here the code that sets up the CVBAR,
+        // the CSP and zeroes out the bss ~
+    "#
+);
+
+// Drop from EL2 to EL1:
+// - system registers are configured so that EL1 starts in Aarch64 full capability mode,
+//   doesn't trap to EL2 on WFI, virtual timer access, floating point or SIMD instructions
+// - stack pointer capability has the address set to __el1_stack_end and the bounds to
+//   __el1_stack_size
+// - vector table and entry point capabilities have the address set to __el1_vectors_start,
+//   and __el1_entry_start, respectively, and have the bounds derived from program counter
+//   capability (PCC)
+//
+// NOTE: This setup assumes that this runtime is used alongside Arm Trusted Firmware that
+//       seems to start BL33 in the non-secure world at EL2. Some configurations can be moved
+//       to the EL1 startup code, but this is made so it jumps directly to the user defined entry.
 core::arch::global_asm!(
     r#"
     .section .text._el2_drop_to_el1
@@ -71,52 +125,52 @@ core::arch::global_asm!(
         // Configure the Default Data Capability (DDC) for EL1 to full system access
         // NOTE: I think this is useless;
         //       ddc from all levels seem to have the same reset value
-        // mrs c0, DDC_EL2
-        // msr DDC_EL1, c0
+        mrs c0, DDC_EL2
+        msr DDC_EL1, c0
 
         // Configure the entry point capability for EL1
         // ARM DDI 0606; 3.2.22
         ldr x0, =__el1_entry_start
-        scvalue c1, ddc, x0
+        adr c1, .
+        scvalue c1, c1, x0
         msr CELR_EL2, c1
 
-        // TODO: Configure stack for EL1 (CSP_EL1)
-        // TODO: Edit PCC
+        // Configure the stack capability for EL1
         ldr x0, =__el1_stack_start
-        scvalue c1, ddc, x0
+        scvalue c1, c0, x0
         ldr x2, =__el1_stack_size
-        // The bounds for c1 (base=ddc_base(0),length=ddc_length(full address space) should get
-        // translated to (base=__el1_stack_start, length=ddc_length)
+        // NOTE: The bounds for c1 (base=ddc_base(0),length=ddc_length(full address space)
+        //       should get translated to (base=__el1_stack_start, length=__el1_stack_size)
         // NOTE: Should this be done in EL1 and just change the address here?
         scbnds c1, c1, x2
         msr CSP_EL1, c1
+        
+        // Configure SPSel to be 1 (exceptions use SP_EL1, not SP_EL0)
+        // ARM DDI 0487; C5.2.18
+        msr SPSel, #1
 
-        // TODO: Configure EL1 vector table (CVBAR_EL1)
-        // 
-        // ldr x0, =el1_vectors
-        // scvalue c1, c0, x0          // derive from DDC
-        // mov x2, #0x800              // vector table size
-        // scbnds c1, c1, x2           // restrict bounds
-        // msr CVBAR_EL1, c1
+        // Configure EL1 vector table (CVBAR_EL1)
+        // ARM DDI 0606; 3.2.48
+        //
+        // NOTE: The bounds for the CVBAR_EL1 are derived from the PCC with the base set to
+        //       the vector table start. Deriving from the PCC is done by first loading the current
+        //       program counter into c2, and modifying the address with scvalue, keeping the PCC
+        //       bounds unmodified.
+        ldr x0, =__el1_vectors_start
+        scvalue c1, c1, x0
+        msr CVBAR_EL1, c1
+
+        // Zero BSS out
+        adr c1, __bss_start
+        adr c2, __bss_end
+        1:
+            cmp c1, c2
+            b.ge 2f
+            str xzr, [c1], #8
+            b 1b
+        2:
+
         isb
         eret
-    "#
-);
-
-core::arch::global_asm!(
-    r#"
-    .section .text._init_stack
-    .global _init_stack
-    .type _init_stack, %function
-    _init_stack:
-        mov x0, xzr // PLACEHOLDER
-    "#
-);
-
-// EL1 entry code (sets up the vector table (I guess) and then jumps to user defined function
-core::arch::global_asm!(
-    r#"
-    // TODO: ?
-    b __aarch64_purecap_rt_main
     "#
 );

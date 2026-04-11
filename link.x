@@ -5,15 +5,27 @@ MEMORY {
 __el1_stack_size = 0x10000;
 
 /* TODO: improve this */
+
 ENTRY(_el2_drop_to_el1);
-EXTERN(_stack_setup);
-EXTERN(_init_stack);
+
+EXTERN(__aarch64_purecap_rt_main);
+
+/* EXTERN(_el2_drop_to_el1); */
 
 SECTIONS {
+    .vectors: {
+        KEEP(*(.vectors))
+        __el1_vectors_start = .;
+        KEEP(*(.vectors.el1))
+        __el2_vectors_start = .;
+    } >ram
+
     .text : {
         KEEP(*(.text._el2_drop_to_el1))
         __el1_entry_start = .;
-        KEEP(*(.text._el1_entry))
+        KEEP(*(.text.el1_entry))
+        __el1_entry_end   = .;
+        KEEP(*(.text))
 	} >ram
 
     .rodata : {
