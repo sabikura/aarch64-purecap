@@ -2,148 +2,129 @@
 #![no_std]
 
 pub use aarch64_purecap_rt_macros::entry;
+pub use aarch64_purecap_rt_macros::exception;
 
 // EL1 vector table
 core::arch::global_asm!(
     r#"
     .section .vectors.el1
     .global _el1_vectors
-    .macro ventry  label
-    .align  7
-    b \label
+    // Save to stack the capability registers. For the Morello architecture, capabilities and
+    // normal registers are stored in the same register file (x0 == c0[64:0])
+    // c0-c18,c29,c30 are caller saved by AAPCS + (celr, spsr) in case of nesting
+    .macro store_regs
+        stp c0,  c1,  [csp, #-(16 * 23)]!
+        stp c2,  c3,  [csp, #(16 * 2)]
+        stp c4,  c5,  [csp, #(16 * 4)]
+        stp c6,  c7,  [csp, #(16 * 6)]
+        stp c8,  c9,  [csp, #(16 * 8)]
+        stp c10, c11, [csp, #(16 * 10)]
+        stp c12, c13, [csp, #(16 * 12)]
+        stp c14, c15, [csp, #(16 * 14)]
+        stp c16, c17, [csp, #(16 * 16)]
+        str c18,      [csp, #(16 * 18)]
+        stp c29, c30, [csp, #(16 * 19)]
+        
+        mrs c0, CELR_EL1
+        mrs x1, SPSR_EL1
+        str c0, [csp, #(16 * 21)]
+        str x1, [csp, #(16 * 22)]
     .endm
+    // Restore the registers state from the stack
+    .macro restore_regs
+        ldp c2,  c3,  [csp, #(16 * 2)]
+        ldp c4,  c5,  [csp, #(16 * 4)]
+        ldp c6,  c7,  [csp, #(16 * 6)]
+        ldp c8,  c9,  [csp, #(16 * 8)]
+        ldp c10, c11, [csp, #(16 * 10)]
+        ldp c12, c13, [csp, #(16 * 12)]
+        ldp c14, c15, [csp, #(16 * 14)]
+        ldp c16, c17, [csp, #(16 * 16)]
+        ldr c18,      [csp, #(16 * 18)]
+        ldp c29, c30, [csp, #(16 * 19)]
+        
+        ldr c0, [csp, #(16 * 21)]
+        ldr x1, [csp, #(16 * 22)]
+        msr CELR_EL1, c0
+        msr SPSR_EL1, x1
+
+        ldp c0, c1, [csp], #(16 * 23)
+    .endm
+    // Exception handler for exceptions that should not occur (hehe)
+    .macro invalid_entry label
+    .align  7
+    \label:
+        b .
+    .endm
+
+    // EL1 vector table
     .align 11
     _el1_vectors:
-        ventry _invalid_entry
-        ventry _invalid_entry 
-        ventry _invalid_entry 
-        ventry _invalid_entry 
+        invalid_entry el1_sp0_sync
+        invalid_entry el1_sp0_irq
+        invalid_entry el1_sp0_fiq
+        invalid_entry el1_sp0_serror
 
-        ventry el1_sync
-        ventry el1_irq
-        ventry _invalid_entry 
-        ventry _invalid_entry 
+        .align 7
+        el1_sync:
+            store_regs
+            mov c0, csp
+            bl __aarch64_purecap_rt_el1_sync
+            restore_regs
 
-        ventry el0_sync
-        ventry el0_irq
-        ventry _invalid_entry 
-        ventry _invalid_entry 
+        .align 7
+        el1_irq: 
+            store_regs
+            mov c0, csp
+            bl __aarch64_purecap_rt_el1_irq
+            restore_regs
 
-        ventry _invalid_entry 
-        ventry _invalid_entry 
-        ventry _invalid_entry 
-        ventry _invalid_entry 
+        invalid_entry el1_sp1_fiq
+        invalid_entry el1_sp1_serror
+
+        .align 7
+        el0_sync:
+            store_regs
+            bl __aarch64_purecap_rt_el0_sync
+            restore_regs
+
+        .align 7
+        el0_irq: 
+            store_regs
+            bl __aarch64_purecap_rt_el0_irq
+            restore_regs
+
+        invalid_entry el0_a64_fiq
+        invalid_entry el0_a64_serror
+
+        invalid_entry el0_a32_sync
+        invalid_entry el0_a32_irq
+        invalid_entry el0_a32_fiq
+        invalid_entry el0_a32_serror
     "#
 );
 
-core::arch::global_asm!(
-    r#"
-    .section .text
-    .global _invalid_entry
-    _invalid_entry:
-        b .
-    "#
-);
-
+// Configure environment before jumping to the user defined function:
+// - stack pointer capability has the address set to __el1_stack_end and the bounds to
+//   __el1_stack_size
+// - vector table and entry point capabilities have the address set to __el1_vectors_start,
+//   and __el1_entry_start, respectively, and have the bounds derived from program counter
+//   capability (PCC)
 core::arch::global_asm!(
     r#"
     .section .text.el1_entry
     .global _el1_entry
     .type _el1_entry, %function
     _el1_entry:
-        // TODO: Move here the code that sets up the CVBAR,
-        // the CSP and zeroes out the bss ~
-    "#
-);
-
-// Drop from EL2 to EL1:
-// - system registers are configured so that EL1 starts in Aarch64 full capability mode,
-//   doesn't trap to EL2 on WFI, virtual timer access, floating point or SIMD instructions
-// - stack pointer capability has the address set to __el1_stack_end and the bounds to
-//   __el1_stack_size
-// - vector table and entry point capabilities have the address set to __el1_vectors_start,
-//   and __el1_entry_start, respectively, and have the bounds derived from program counter
-//   capability (PCC)
-//
-// NOTE: This setup assumes that this runtime is used alongside Arm Trusted Firmware that
-//       seems to start BL33 in the non-secure world at EL2. Some configurations can be moved
-//       to the EL1 startup code, but this is made so it jumps directly to the user defined entry.
-core::arch::global_asm!(
-    r#"
-    .section .text._el2_drop_to_el1
-    .global _el2_drop_to_el1 
-    .type _el2_drop_to_el1, %function
-    _el2_drop_to_el1:
-        // Disable traps for co-processor access
-        // ARM DDI 0487; D24.2.77
-        msr HSTR_EL2, xzr
-
-        // Disable traps for advanced functionalities like FP or CHERI
-        // ARM DDI 0606; 3.2.11
-        mrs x0, CPTR_EL2
-        bic x0, x0, #(1 << 31)               // TCPAC
-        bic x0, x0, #(1 << 28)               // TTA
-        bic x0, x0, #(1 << 10)               // TFP
-        bic x0, x0, #(1 << 9)                // TC
-        bic x0, x0, #(1 << 8)                // TZ
-        orr x0, x0, #((1 << 20) | (1 << 21)) // FPEN
-        orr x0, x0, #((1 << 19) | (1 << 18)) // CEN
-        orr x0, x0, #((1 << 17) | (1 << 16)) // ZEN
-        msr CPTR_EL2, x0
-
-        // Don't know if this will bite later, but allow EL1 to execute
-        // privileged capability creating instructions
-        // ARM DDI 0606; 3.2.7
-        mrs x0, CHCR_EL2
-        bic x0, x0, 1 // SETTAG
-        msr CHCR_EL2, x0
-
-        // More configuration
-        // NOTE: This is a BIG register, might need to look at each bit in the future (?)
-        // ARM DDI 0487; D24.2.62
-        mrs x0, HCR_EL2
-        bic x0, x0, #(1 << 13) // TWI: Don't trap WFI instructions
-        orr x0, x0, #(1 << 31) // RW:  EL1 runs in Aarch64
-        msr HCR_EL2, x0
-
-        // Configure access to timers
-        // ARM DDI 0487; D24.10.2
-        mrs x0, CNTHCTL_EL2
-        orr x0, x0, #((1 << 10) | (1 << 9))  // EL1PTEN | EL1PCTEN: don't trap timer access
-        msr CNTHCTL_EL2, x0 
-        // ARM DDI 0487; D24.10.30
-        msr CNTVOFF_EL2, xzr // Virtual offset for the timer is 0
-
-        // TODO: Configure SCTLR_EL1 (not understanding the fields yet)
-
-        // Configure the status register
-        // ARM DDI 0606; 3.2.41
-        mov x0, #0x3C5          // Mask D,A,I,F exceptions and return to EL1h stack pointer
-        orr x0, x0, #(1 << 26)  // EL1 in full capability mode (C64)
-        msr SPSR_EL2, x0
-
-        // Configure the Default Data Capability (DDC) for EL1 to full system access
-        // NOTE: I think this is useless;
-        //       ddc from all levels seem to have the same reset value
-        mrs c0, DDC_EL2
-        msr DDC_EL1, c0
-
-        // Configure the entry point capability for EL1
-        // ARM DDI 0606; 3.2.22
-        ldr x0, =__el1_entry_start
-        adr c1, .
-        scvalue c1, c1, x0
-        msr CELR_EL2, c1
-
         // Configure the stack capability for EL1
         ldr x0, =__el1_stack_start
-        scvalue c1, c0, x0
+        cvtd c0, x0
         ldr x2, =__el1_stack_size
         // NOTE: The bounds for c1 (base=ddc_base(0),length=ddc_length(full address space)
         //       should get translated to (base=__el1_stack_start, length=__el1_stack_size)
         // NOTE: Should this be done in EL1 and just change the address here?
-        scbnds c1, c1, x2
-        msr CSP_EL1, c1
+        scbnds c0, c0, x2
+        msr CSP_EL1, c0
         
         // Configure SPSel to be 1 (exceptions use SP_EL1, not SP_EL0)
         // ARM DDI 0487; C5.2.18
@@ -157,20 +138,21 @@ core::arch::global_asm!(
         //       program counter into c2, and modifying the address with scvalue, keeping the PCC
         //       bounds unmodified.
         ldr x0, =__el1_vectors_start
-        scvalue c1, c1, x0
-        msr CVBAR_EL1, c1
+        cvtd c0, x0
+        msr CVBAR_EL1, c0
 
         // Zero BSS out
-        adr c1, __bss_start
-        adr c2, __bss_end
+        ldr x0, __bss_start
+        cvtd c0, x0
+        ldr x1, __bss_end
+        cvtd c1, x1
         1:
-            cmp c1, c2
+            cmp c0, c1
             b.ge 2f
-            str xzr, [c1], #8
+            str xzr, [c0], #8
             b 1b
         2:
 
-        isb
-        eret
+        b __aarch64_purecap_rt_main 
     "#
 );
