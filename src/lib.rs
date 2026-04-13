@@ -7,7 +7,7 @@ pub use aarch64_purecap_rt_macros::exception;
 // EL1 vector table
 core::arch::global_asm!(
     r#"
-    .section .vectors.el1
+    .section .vectors.el1, "ax"
     .global _el1_vectors
     // Save to stack the capability registers. For the Morello architecture, capabilities and
     // normal registers are stored in the same register file (x0 == c0[64:0])
@@ -112,7 +112,7 @@ core::arch::global_asm!(
 //   capability (PCC)
 core::arch::global_asm!(
     r#"
-    .section .text.el1_entry
+    .section .init.entry, "ax"
     .global _el1_entry
     .type _el1_entry, %function
     _el1_entry:
@@ -142,9 +142,9 @@ core::arch::global_asm!(
         msr CVBAR_EL1, c0
 
         // Zero BSS out
-        ldr x0, __bss_start
+        ldr x0, __el1_bss_start
         cvtd c0, x0
-        ldr x1, __bss_end
+        ldr x1, __el1_bss_end
         cvtd c1, x1
         1:
             cmp c0, c1
