@@ -3,7 +3,7 @@ rustc = "./tools/aarch64-unknown-none-purecap-rustc.sh"
 target = "aarch64-unknown-none-purecap"
 
 [target.aarch64-unknown-none-purecap]
-linker = "./tools/aarch64-unknown-none-purecap-linker.sh"
+linker = "./tools/ld.sh"
 
 [net]
 git-fetch-with-cli = true
