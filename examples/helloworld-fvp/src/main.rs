@@ -2,6 +2,7 @@
 #![no_main]
 
 use aarch64_purecap_rt::entry;
+mod exceptions;
 mod pl011;
 
 #[entry]
