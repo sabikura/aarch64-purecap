@@ -7,6 +7,7 @@
 .section .text._el2_drop_to_el1
 .global _el2_drop_to_el1 
 .type _el2_drop_to_el1, %function
+.extern __el1_entry_start
 _el2_drop_to_el1:
     // Disable traps for co-processor access
     // ARM DDI 0487; D24.2.77

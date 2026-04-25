@@ -2,4 +2,4 @@
 
 : "${CHERI_HOME:=$HOME/cheri}"
 
-exec "$CHERI_HOME/output/morello-sdk/bin/objdump" "$@"
+exec "$CHERI_HOME/output/morello-sdk/bin/llvm-objdump" "$@"

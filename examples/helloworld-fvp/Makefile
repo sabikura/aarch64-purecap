@@ -22,6 +22,8 @@ EL2_ENTRY_ASM := entry.S
 $(EL2_ENTRY_OBJ): $(EL2_ENTRY_ASM)
 	$(AS) $(ARCH_COMMON) -c $< -o $@
 
+# $(EL1_RS_OBJ):
+
 .PHONY: dump
 dump: $(IMAGE)
 	$(OBJDUMP) -d $<

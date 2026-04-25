@@ -6,6 +6,8 @@ SECTIONS {
         KEEP(*(.vectors.el1))
     } > ram
 
+    . = 0x80005000;
+
     .text : {
         *(.init.entry)
         *(.text*)
