@@ -15,9 +15,7 @@ RUN ./build-scripts/fetch-tools.sh -p fvp -f none build
 RUN ./build-scripts/build-scp.sh -p fvp -f none all
 RUN ./build-scripts/build-arm-tf.sh -p fvp -f none all
 
-# TODO: (maybe) a Makefile rule that:
-# - $(toolchain)-objcopy -O bin
-# - rename it to `uefi.bin`
-# - run the ./build-firmware-image.sh script to get fip.bin
+COPY --chown=root:root ./patches /root/workspace/patches
+RUN cd /root/workspace/build-scripts && git apply /root/workspace/patches/0001-modify-fw-image-script.patch
 
 ENTRYPOINT [""]

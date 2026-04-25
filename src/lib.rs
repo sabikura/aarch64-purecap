@@ -112,23 +112,26 @@ core::arch::global_asm!(
 //   capability (PCC)
 core::arch::global_asm!(
     r#"
-    .section .init.entry, "ax"
+    .section .text._el1_entry, "ax"
     .global _el1_entry
     .type _el1_entry, %function
     _el1_entry:
+        // Configure SPSel to be 1 (exceptions use SP_EL1, not SP_EL0)
+        // ARM DDI 0487; C5.2.18
+        msr SPSel, #1
+
         // Configure the stack capability for EL1
-        ldr x0, =__el1_stack_start
+        ldr  x0, =__el1_stack_end
         cvtd c0, x0
-        ldr x2, =__el1_stack_size
+        ldr  x2, =__el1_stack_size
+
         // NOTE: The bounds for c1 (base=ddc_base(0),length=ddc_length(full address space)
         //       should get translated to (base=__el1_stack_start, length=__el1_stack_size)
         // NOTE: Should this be done in EL1 and just change the address here?
         scbnds c0, c0, x2
-        msr CSP_EL1, c0
-        
-        // Configure SPSel to be 1 (exceptions use SP_EL1, not SP_EL0)
-        // ARM DDI 0487; C5.2.18
-        msr SPSel, #1
+        ldr  x0, =__el1_stack_start
+        scvalue c0, c0, x0
+        mov  csp, c0
 
         // Configure EL1 vector table (CVBAR_EL1)
         // ARM DDI 0606; 3.2.48
@@ -142,9 +145,9 @@ core::arch::global_asm!(
         msr CVBAR_EL1, c0
 
         // Zero BSS out
-        ldr x0, __el1_bss_start
+        ldr x0, =__el1_bss_start
         cvtd c0, x0
-        ldr x1, __el1_bss_end
+        ldr x1, =__el1_bss_end
         cvtd c1, x1
         1:
             cmp c0, c1
@@ -153,6 +156,6 @@ core::arch::global_asm!(
             b 1b
         2:
 
-        b __aarch64_purecap_rt_main 
+        b __aarch64_purecap_rt_main
     "#
 );

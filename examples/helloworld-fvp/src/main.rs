@@ -7,6 +7,7 @@ mod pl011;
 
 #[entry]
 fn main() -> ! {
+    pl011::write(b"hello, world!\n\r");
     loop {}
 }
 

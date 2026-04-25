@@ -49,7 +49,18 @@ _el2_drop_to_el1:
     // ARM DDI 0487; D24.10.30
     msr CNTVOFF_EL2, xzr // Virtual offset for the timer is 0
 
-    // TODO: Configure SCTLR_EL1 (not understanding the fields yet)
+    // Configure SCTLR_EL1: disable MMU and caches but preserve Morello-specific bits
+    mrs x0, SCTLR_EL1
+    bic x0, x0, #(1 << 0)    // M:  MMU off
+    bic x0, x0, #(1 << 2)    // C:  Data cache off
+    bic x0, x0, #(1 << 12)   // I:  Instruction cache off
+    msr SCTLR_EL1, x0
+
+    // Enable capability instructions at EL1/EL0 (CPACR_EL1.CEN = 0b11)
+    // Without this, BX #4 and other capability instructions fault at EL1.
+    mrs x0, CPACR_EL1
+    orr x0, x0, #(3 << 18)   // CEN = 0b11: no trapping
+    msr CPACR_EL1, x0
 
     // Configure the status register
     // ARM DDI 0606; 3.2.41
@@ -60,15 +71,18 @@ _el2_drop_to_el1:
     // Configure the Default Data Capability (DDC) for EL1 to full system access
     // NOTE: I think this is useless;
     //       ddc from all levels seem to have the same reset value
-    mrs c0, DDC_EL2
-    msr DDC_EL1, c0
+    // mrs c0, DDC_EL2
+    // msr DDC_EL1, c0
 
-    // Configure the entry point capability for EL1 by converting
-    // the __el1_entry_start pointer to a capability derived from PCC
-    // ARM DDI 0606; 3.2.22
+    // DIAGNOSTIC: eret to test stub (A64 mode, within PCC bounds).
+    // adr x0, _el1_test_stub
     ldr x0, =__el1_entry_start
-    cvtp c1, x0
-    msr CELR_EL2, c1
+    cvtp c0, x0
+    msr CELR_EL2, c0
+
+    // Give EL1 the same DDC authority as EL2
+    mrs     c0, DDC
+    msr     DDC_EL1, c0
 
     isb
     eret

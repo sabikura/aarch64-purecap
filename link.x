@@ -1,16 +1,17 @@
 INCLUDE memory.x
 
+__el1_stack_size = 0x10000;
+
 SECTIONS {
+    .text : {
+        KEEP(*(.text._el1_entry))
+        *(.text*)
+    } > ram
+
     .vectors : ALIGN(2048) {
         __el1_vectors_start = .;
         KEEP(*(.vectors.el1))
-    } > ram
-
-    . = 0x80005000;
-
-    .text : {
-        *(.init.entry)
-        *(.text*)
+        . = ALIGN(0x800);
     } > ram
 
     .rodata : { *(.rodata*) } > ram
@@ -25,7 +26,7 @@ SECTIONS {
     .stack (NOLOAD) : ALIGN(16) {
         __el1_stack_start = .;
         . += 0x10000;
-        __el1_stack_size = . - __el1_stack_start;
+        __el1_stack_end = .;
     } > ram
 
     /DISCARD/ : { *(.comment) *(.eh_frame) }
