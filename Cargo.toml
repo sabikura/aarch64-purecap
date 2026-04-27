@@ -1,7 +1,7 @@
-[package]
-name = "aarch64-purecap-rt"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-aarch64-purecap-rt-macros = { git = "ssh://git@git.sr.ht/~irina/aarch64-purecap-rt-macros", branch = "master" }
+[workspace]
+resolver = "2"
+members = [
+    "aarch64-purecap-rt-macros",
+    "xtask",
+]
+exclude = ["aarch64-purecap-rt", "examples/helloworld-morello-fvp"]

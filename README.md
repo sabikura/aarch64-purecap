@@ -1,48 +1,43 @@
 # aarch64-purecap-rt
 
-Library for a simple startup routine for pure capability application on the Aarch64 cores that have
-the CHERI extension, i.e. Arm Morello architecture.
+Library for a simple startup routine for CHERI Aarch64 (ARM Morello architecture) pure capability bare-metal applications.
 
-## Getting started
+## xtask
 
-### Getting the compiler
+The `xtask` binary wraps the project's build, firmware-packaging, and FVP commands so they share one toolchain and one set of paths.
+Run from the workspace root:
 
-TODO: Add config.toml in `./compiler`
-
-First things first, the support for Arm Morello in `rustc` is not yet upstreamed.
-This repository contains a patch for adding support for the `aarch64-unknown-none-purecap` target
-triple. The "support" I added is just a config file because the current state had only FreeBSD
-targets. The whole work to get rustc to work with the Morello LLVM backend was done by the
-University of Kent team and is really impressive.
-
-Clone the repository with the compiler:
-
-```shell
-git clone --depth 1 https://github.com/kent-weak-memory/rust.git $CHERI_RUST
+```
+cargo xtask <command> [args]
 ```
 
-Take the patch file `aarch64-unknown-none-purecap.patch` from this repository and apply it to your clone:
+Commands:
 
-```shell
-cd $CHERI_RUST
-git apply /path/to/aarch64-purecap-rt/compiler/aarch64-unknown-none-purecap.patch
+- `setup` - initializes git submodules and builds the TF-A Morello fork (`examples/fvp/maketfa.sh`)
+- `build [cargo-args]` - builds `aarch64-purecap-rt` via the CHERI toolchain
+- `check [cargo-args]` - checks`aarch64-purecap-rt`
+- `build-example <name>` - builds `examples/<name>` in release mode
+- `fip <name>` - builds `<name>` example, then packages a Firmware Image Package (FIP)
+  with the application as BL33 (requires that `setup` was called) at `examples/fvp/output/<name>/fip.bin`
+- `fvp <name> [--clean]` - boots `<name>` example on the Morello FVP. Rebuilds the
+  firmware image if `fip.bin` is missing or `--clean` is passed.
+- `help` - prints usage
+
+Example workflow:
+
+```
+cargo xtask setup
+cargo xtask fip helloworld-morello-fvp
+cargo xtask fvp helloworld-morello-fvp --clean
 ```
 
-### Building the compiler
+While `cargo xtask fvp <name>` is running, the FVP exposes the AP UART over
+telnet. Attach to the console from another terminal with:
 
-The instructions on building the compiler are found in `rust/README.md` in the **Building from source** chapter,
-and additional helpful information is in `rust/CHERI-NOTES.md`.
+```
+telnet localhost 5003
+```
 
-> **Important:**
-> One key thing you have to do is make sure you build the `core` library using: `./x.py build library` and `cargo`
-using `./x.py build tools/cargo`.
-
-### Building the crate
-
-In order to build the crate, the Cargo config uses the scripts in `tools` for the compiler and linker.
-You will need to edit the `$CHERI_HOME` and `$CHERI_RUST` variables.
-
-> **Note:**
-> You will also have to use the `cargo` version that you previously compiled in the CHERI rust repository. You'll find a helper script
-in `tools/cargo.sh` that you can use.
+> Note:
+> See `QUICKSTART.md` for how to build the Rust fork and the Morello SDK.
 

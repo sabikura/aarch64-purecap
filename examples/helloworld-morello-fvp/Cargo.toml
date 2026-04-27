@@ -1,0 +1,10 @@
+[package]
+name = "helloworld-fvp"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tock-registers = "0.10.1"
+
+[dependencies.aarch64-purecap-rt]
+path = "../../aarch64-purecap-rt"

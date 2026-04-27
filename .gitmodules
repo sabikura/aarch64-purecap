@@ -1,0 +1,9 @@
+[submodule "examples/fvp/firmware"]
+	path = examples/fvp/firmware
+	url = https://git.morello-project.org/morello/fvp-firmware.git
+[submodule "examples/fvp/trusted-firmware-a"]
+	path = examples/fvp/trusted-firmware-a
+	url = https://git.morello-project.org/morello/trusted-firmware-a.git
+[submodule "examples/fvp/mbedtls"]
+	path = examples/fvp/mbedtls
+	url = https://github.com/Mbed-TLS/mbedtls.git

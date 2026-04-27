@@ -1,1 +1,0 @@
-../../../tools/aarch64-unknown-none-purecap-rustc.sh

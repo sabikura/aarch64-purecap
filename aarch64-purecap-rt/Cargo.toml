@@ -1,0 +1,12 @@
+[package]
+name = "aarch64-purecap-rt"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Run-time support for pure capability applications on Arm Morello."
+authors = ["Irina Nita <irina.nita@posteo.com>"]
+
+[dependencies]
+aarch64-purecap-rt-macros = { path = "../aarch64-purecap-rt-macros" }
+
+[workspace]

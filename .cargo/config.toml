@@ -1,9 +1,2 @@
-[build]
-rustc = "./tools/aarch64-unknown-none-purecap-rustc.sh"
-target = "aarch64-unknown-none-purecap"
-
-[target.aarch64-unknown-none-purecap]
-linker = "./tools/ld.sh"
-
-[net]
-git-fetch-with-cli = true
+[alias]
+xtask = "run --package xtask --bin xtask --"

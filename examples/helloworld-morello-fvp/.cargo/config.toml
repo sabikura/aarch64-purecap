@@ -1,0 +1,6 @@
+[build]
+rustc = "../../toolchain/rustc.sh"
+target = "aarch64-unknown-none-purecap"
+
+[target.aarch64-unknown-none-purecap]
+linker = "../../toolchain/ld.sh"
