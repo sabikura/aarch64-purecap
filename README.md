@@ -2,10 +2,12 @@
 
 Library for a simple startup routine for CHERI Aarch64 (ARM Morello architecture) pure capability bare-metal applications.
 
-## xtask
+## Getting started
 
-The `xtask` binary wraps the project's build, firmware-packaging, and FVP commands so they share one toolchain and one set of paths.
-Run from the workspace root:
+See [QUICKSTART.md](./QUICKSTART.md#getting-started) for how to build the Rust fork and the Morello SDK.
+
+This project uses [`xtask`](https://github.com/matklad/cargo-xtask) for automation. The `xtask` command wraps the project's build, firmware-packaging,
+and FVP commands so they share one toolchain and one set of paths. Run from the workspace root:
 
 ```
 cargo xtask <command> [args]
@@ -37,7 +39,4 @@ telnet. Attach to the console from another terminal with:
 ```
 telnet localhost 5003
 ```
-
-> Note:
-> See `QUICKSTART.md` for how to build the Rust fork and the Morello SDK.
 
