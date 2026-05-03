@@ -8,6 +8,6 @@ repository = "https://codeberg.org/irinanita/aarch64-purecap"
 authors = ["Irina Nita <irina.nita@posteo.com>"]
 
 [dependencies]
-aarch64-purecap-rt-macros = { path = "../aarch64-purecap-rt-macros" }
+aarch64-purecap-rt-macros = { version = "0.1.0", path = "../aarch64-purecap-rt-macros" }
 
 [workspace]

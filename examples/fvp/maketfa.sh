@@ -25,7 +25,7 @@ make_flags=(
 
 make -C "$DIR/trusted-firmware-a" "${make_flags[@]}" certtool
 make -C "$DIR/trusted-firmware-a" "${make_flags[@]}" fiptool
-make -C "$DIR/trusted-firmware-a" "${make_flags[@]}" all BL33="$DIR/helloworld.bin"
+make -C "$DIR/trusted-firmware-a" "${make_flags[@]}" all
 
 mkdir -p "$DIR/output"
 cp "$DIR/trusted-firmware-a/build/morello/release/"*.bin "$DIR/output/"
