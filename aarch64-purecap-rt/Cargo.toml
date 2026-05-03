@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 license = "MIT"
 description = "Run-time support for pure capability applications on Arm Morello."
+repository = "https://codeberg.org/irinanita/aarch64-purecap"
 authors = ["Irina Nita <irina.nita@posteo.com>"]
 
 [dependencies]
