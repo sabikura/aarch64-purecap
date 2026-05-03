@@ -2,7 +2,6 @@
 #![no_main]
 
 use aarch64_purecap_rt::entry;
-mod pl011;
 
 #[link_section = ".el2_entry"]
 #[used]
@@ -12,8 +11,20 @@ pub static EL2_ENTRY_BIN: [u8; include_bytes!(env!("EL2_ENTRY_BIN")).len()] =
 
 #[entry]
 fn main() -> ! {
-    pl011::write(b"hello, world!\n\r");
+    write_str(b"hello, world!\n\r");
     loop {}
+}
+
+/// Write a slice of bytes to the PL011 UART
+fn write_str(data: &[u8]) {
+    const UART_PL011_DATA_REGISTER: usize = 0x2A40_0000;
+
+    unsafe {
+        let uart_dr = beri::capability_from_address(UART_PL011_DATA_REGISTER);
+        for byte in data {
+            core::ptr::write_volatile(uart_dr, *byte as u32);
+        }
+    }
 }
 
 #[panic_handler]
