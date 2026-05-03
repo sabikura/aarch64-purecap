@@ -22,7 +22,7 @@ Take the patch file `aarch64-unknown-none-purecap.patch` from this repository an
 
 ```shell
 cd $CHERI_RUST
-git apply /path/to/aarch64-purecap-rt/compiler/aarch64-unknown-none-purecap.patch
+git apply /path/to/aarch64-purecap/toolchain/compiler/aarch64-unknown-none-purecap.patch
 ```
 
 ### Building the compiler
