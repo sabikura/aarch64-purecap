@@ -3,6 +3,10 @@
 version = 3
 
 [[package]]
+name = "aarch64-purecap-cpu"
+version = "0.1.0"
+
+[[package]]
 name = "aarch64-purecap-rt"
 version = "0.1.0"
 dependencies = [
@@ -19,16 +23,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "beri"
-version = "0.1.0"
-source = "git+ssh://git@codeberg.org/irinanita/beri-rs.git#182b758de133052a78f0350beed7b1aa6b692bcf"
-
-[[package]]
 name = "helloworld-morello-fvp"
 version = "0.1.0"
 dependencies = [
+ "aarch64-purecap-cpu",
  "aarch64-purecap-rt",
- "beri",
  "tock-registers",
 ]
 

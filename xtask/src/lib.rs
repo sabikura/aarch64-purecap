@@ -10,6 +10,7 @@ pub type Result<T> = std::result::Result<T, XtaskError>;
 /// CARGO_MANIFEST_DIR so commands work regardless of the caller's cwd.
 pub struct Context {
     aarch64_purecap_rt: PathBuf,
+    aarch64_purecap_cpu: PathBuf,
     toolchain: PathBuf,
     examples: PathBuf,
     fvp: PathBuf,
@@ -23,6 +24,7 @@ impl Context {
 
         Self {
             aarch64_purecap_rt: parent.join("aarch64-purecap-rt"),
+            aarch64_purecap_cpu: parent.join("aarch64-purecap-cpu"),
             toolchain: parent.join("toolchain"),
             fvp: examples.join("fvp"),
             examples,
@@ -30,11 +32,13 @@ impl Context {
     }
 
     pub fn build(&self, args: &[String]) -> Result<()> {
-        self.cargo_command("build", &self.aarch64_purecap_rt, args)
+        self.cargo_command("build", &self.aarch64_purecap_rt, args)?;
+        self.cargo_command("build", &self.aarch64_purecap_cpu, args)
     }
 
     pub fn check(&self, args: &[String]) -> Result<()> {
-        self.cargo_command("check", &self.aarch64_purecap_rt, args)
+        self.cargo_command("check", &self.aarch64_purecap_rt, args)?;
+        self.cargo_command("build", &self.aarch64_purecap_cpu, args)
     }
 
     /// Invokes `toolchain/cargo.sh`, the wrapper that points at the CHERI

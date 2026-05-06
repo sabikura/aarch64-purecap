@@ -4,4 +4,4 @@ members = [
     "aarch64-purecap-rt-macros",
     "xtask",
 ]
-exclude = ["aarch64-purecap-rt", "examples/helloworld-morello-fvp"]
+exclude = ["aarch64-purecap-rt", "aarch64-purecap-cpu", "examples/helloworld-morello-fvp"]

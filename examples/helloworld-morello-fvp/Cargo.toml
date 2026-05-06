@@ -6,4 +6,4 @@ edition = "2021"
 [dependencies]
 tock-registers = "0.10.1"
 aarch64-purecap-rt = { path = "../../aarch64-purecap-rt" }
-beri = { git = "ssh://git@codeberg.org/irinanita/beri-rs.git" }
+aarch64-purecap-cpu = { path = "../../aarch64-purecap-cpu" }

@@ -20,7 +20,7 @@ fn write_str(data: &[u8]) {
     const UART_PL011_DATA_REGISTER: usize = 0x2A40_0000;
 
     unsafe {
-        let uart_dr = beri::capability_from_address(UART_PL011_DATA_REGISTER);
+        let uart_dr = aarch64_purecap_cpu::capability_from_address(UART_PL011_DATA_REGISTER);
         for byte in data {
             core::ptr::write_volatile(uart_dr, *byte as u32);
         }
