@@ -4,6 +4,5 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-tock-registers = "0.10.1"
 aarch64-purecap-rt = { path = "../../aarch64-purecap-rt" }
 aarch64-purecap-cpu = { path = "../../aarch64-purecap-cpu" }
