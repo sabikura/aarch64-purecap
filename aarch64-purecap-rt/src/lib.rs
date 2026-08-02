@@ -51,6 +51,7 @@
 
 pub use aarch64_purecap_rt_macros::entry;
 pub use aarch64_purecap_rt_macros::exception;
+mod cap_relocs;
 
 // Configure environment before jumping to the user defined function:
 // - stack pointer capability has the address set to __el1_stack_end and the bounds to
@@ -69,17 +70,45 @@ core::arch::global_asm!(
         msr SPSel, #1
 
         // Configure the stack capability for EL1
-        ldr  x0, =__el1_stack_end
-        cvtd c0, x0
-        ldr  x2, =__el1_stack_size
 
-        // NOTE: The bounds for c1 (base=ddc_base(0),length=ddc_length(full address space)
-        //       should get translated to (base=__el1_stack_start, length=__el1_stack_size)
-        // NOTE: Should this be done in EL1 and just change the address here?
-        scbnds c0, c0, x2
-        ldr  x0, =__el1_stack_start
-        scvalue c0, c0, x0
-        mov  csp, c0
+        // Compute start address into x0
+        adrp    c0, __el1_stack_start           // Page address
+        add     c0, c0, :lo12:__el1_stack_start // Page offset
+        gcvalue x0, c0
+
+        // Compute end address into x1
+        adrp    c1, __el1_stack_end
+        add     c1, c1, :lo12:__el1_stack_end
+        gcvalue x1, c1
+
+        // Compute the size into x2
+        sub x2, x1, x0
+
+        // x3 is the mask for the needed alignment so that a capability of length `x2` is
+        // representable
+        //
+        // start = x0
+        // end   = x1
+        // size  = x2
+        // ~(alignment - 1) = x3
+        //
+        // The following snippets aligns the start address of the stack to be >= initial address
+        // specified in the linker script
+        //
+        // new_start = (start + alignment - 1) & ~(alignment - 1)
+        // new_end   = end & ~(alignment - 1)
+        // new_len   = new_end - new_start
+        rrmask x3, x2
+        mvn x4, x3
+        add     x0, x0, x4
+        and     x0, x0, x3
+        and     x1, x1, x3
+        sub     x2, x1, x0
+
+        cvtd    c0, x0
+        scbndse c0, c0, x2
+        add     c0, c0, x2
+        mov     csp, c0
 
         // Configure EL1 vector table (CVBAR_EL1)
         // ARM DDI 0606; 3.2.48
@@ -104,6 +133,9 @@ core::arch::global_asm!(
             b 1b
         2:
 
+        bl __init_cap_relocs
+        isb
+        dsb sy
         b __aarch64_purecap_rt_main
     "#
 );

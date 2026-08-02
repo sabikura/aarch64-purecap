@@ -13,17 +13,29 @@ SECTIONS {
     } > ram
 
     .rodata : { *(.rodata*) } > ram
+
+    .__cap_relocs : {
+        __cap_relocs_start = .;
+        KEEP(*(__cap_relocs))
+        KEEP(*(.__cap_relocs))
+        __cap_relocs_end = .;
+    } > ram
+
     .data   : { *(.data*)   } > ram
 
-    .bss : {
+    .bss (NOLOAD) : ALIGN(16) {
         __el1_bss_start = .;
-        *(.bss*)
+        *(.bss .bss.*)
+        *(.sbss .sbss.*)
+        *(COMMON)
+        . = ALIGN(16);
         __el1_bss_end = .;
     } > ram
 
-    .stack (NOLOAD) : ALIGN(16) {
+    .stack (NOLOAD) : ALIGN(4096) {
         __el1_stack_start = .;
         . += __el1_stack_size;
+        . = ALIGN(16);
         __el1_stack_end = .;
     } > ram
 

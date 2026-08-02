@@ -3,7 +3,7 @@ MEMORY {
     ram : ORIGIN = 0xE0000800, LENGTH = 64M - 2K
 }
 
-PROVIDE(__el1_stack_size = 0x10000);
+PROVIDE(__el1_stack_size = 0x4000);
 ENTRY(_el1_entry)
 
 SECTIONS {

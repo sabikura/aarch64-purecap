@@ -56,6 +56,7 @@ _el2_drop_to_el1:
     // Enable capability instructions at EL1/EL0 (CPACR_EL1.CEN = 0b11)
     // Without this, BX #4 and other capability instructions fault at EL1.
     mrs x0, CPACR_EL1
+    orr x0, x0, #(3 << 20)   // FPEN
     orr x0, x0, #(3 << 18)   // CEN = 0b11: no trapping
     msr CPACR_EL1, x0
 

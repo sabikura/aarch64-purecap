@@ -12,6 +12,7 @@ pub static EL2_ENTRY_BIN: [u8; include_bytes!(env!("EL2_ENTRY_BIN")).len()] =
 #[entry]
 fn main() -> ! {
     write_str(b"hello, world!\n\r");
+
     loop {}
 }
 
