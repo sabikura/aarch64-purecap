@@ -20,9 +20,10 @@ fn main() -> ! {
 fn write_str(data: &[u8]) {
     const UART_PL011_DATA_REGISTER: usize = 0x2A40_0000;
 
-    unsafe {
-        let uart_dr = aarch64_purecap_cpu::capability_from_address(UART_PL011_DATA_REGISTER);
-        for byte in data {
+    let uart_dr = aarch64_purecap_cpu::capability_from_address(UART_PL011_DATA_REGISTER);
+    for byte in data {
+        // SAFETY: The ptr to the UART PL011 data register is valid for writes and properly aligned
+        unsafe {
             core::ptr::write_volatile(uart_dr, *byte as u32);
         }
     }

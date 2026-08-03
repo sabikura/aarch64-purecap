@@ -61,6 +61,7 @@ mod cap_relocs;
 //   capability (PCC)
 core::arch::global_asm!(
     r#"
+    .arch morello+c64
     .section .text._el1_entry, "ax"
     .global _el1_entry
     .type _el1_entry, %function
@@ -166,6 +167,7 @@ core::arch::global_asm!(
 // Configure the EL1 vector table.
 core::arch::global_asm!(
     r#"
+    .arch morello+c64
     .section .vectors.el1, "ax"
     .global _el1_vectors
     // Save to stack the capability registers. For the Morello architecture, capabilities and

@@ -60,10 +60,6 @@ was configured properly by trying to build the `aarch64-purecap-rt` crate with:
 cargo xtask build --release
 ```
 
-> **Note:**
-> Some error logs from the compiler relating to the assembly might appear when running the build command,
-> but the instructions look correctly generated after inspecting the `objdump` output of the application binary.
-
 ### Morello Fixed Virtual Platform (FVP)
 
 For running the example, you will need the `Morello Fixed Virtual Platform (FVP)` tool to simulate the Morello SoC. The run script in `examples/fvp`
