@@ -1,10 +1,41 @@
 mod error;
 
+use owo_colors::OwoColorize;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
 pub use error::XtaskError;
 pub type Result<T> = std::result::Result<T, XtaskError>;
+
+/// Wrapper over [`Command::status`] that also prints the executed command in a pretty format.
+fn run(command: &mut Command) -> ::std::result::Result<std::process::ExitStatus, std::io::Error> {
+    eprintln!(
+        "{:>10}: Inside directory {}",
+        "Xtask".blue().bold(),
+        command
+            .get_current_dir()
+            .unwrap_or(&std::env::current_dir()?)
+            .to_string_lossy()
+    );
+
+    eprintln!(
+        "{:>10}: Running {}",
+        "Xtask".blue().bold(),
+        format!(
+            "{} {}",
+            command.get_program().to_string_lossy(),
+            command
+                .get_args()
+                .map(|oss| oss.to_string_lossy())
+                .collect::<Vec<_>>()
+                .join(" ")
+        )
+        .underline()
+        .bold()
+    );
+
+    command.status()
+}
 
 /// Resolved absolute paths to workspace subdirectories. Computed once from
 /// CARGO_MANIFEST_DIR so commands work regardless of the caller's cwd.
@@ -53,11 +84,10 @@ impl Context {
             path.to_string_lossy(),
         );
 
-        let status = Command::new(cargo)
+        let status = run(Command::new(cargo)
             .arg(command)
             .args(args)
-            .current_dir(path)
-            .status()?;
+            .current_dir(path))?;
 
         if !status.success() {
             eprintln!("command failed with status {}", status);
@@ -87,8 +117,8 @@ impl Context {
             self.fip_example_inner(&path, name, &pkg_name)?;
         }
 
-        let run = self.fvp.join("run.sh");
-        let status = Command::new(run).arg(&fip_bin).status()?;
+        let run_cmd = self.fvp.join("run.sh");
+        let status = run(Command::new(run_cmd).arg(&fip_bin))?;
         if !status.success() {
             eprintln!("run.sh failed with status {}", status);
             return Err(XtaskError::CommandFailed);
@@ -116,11 +146,10 @@ impl Context {
         let bin = target_dir.join(format!("{pkg_name}.bin"));
 
         let objcopy = self.toolchain.join("objcopy.sh");
-        let status = Command::new(&objcopy)
+        let status = run(Command::new(&objcopy)
             .args(["-O", "binary"])
             .arg(&elf)
-            .arg(&bin)
-            .status()?;
+            .arg(&bin))?;
         if !status.success() {
             eprintln!("objcopy failed with status {}", status);
             return Err(XtaskError::CommandFailed);
@@ -128,7 +157,7 @@ impl Context {
 
         let out = self.example_output_dir(name);
         let fip_sh = self.fvp.join("fip.sh");
-        let status = Command::new(fip_sh).arg(&bin).arg(&out).status()?;
+        let status = run(Command::new(fip_sh).arg(&bin).arg(&out))?;
         if !status.success() {
             eprintln!("fip.sh failed with status {}", status);
             return Err(XtaskError::CommandFailed);
@@ -138,16 +167,15 @@ impl Context {
     }
 
     pub fn setup(&self) -> Result<()> {
-        let status = Command::new("git")
-            .args(["submodule", "update", "--init", "--recursive"])
-            .status()?;
+        let status =
+            run(Command::new("git").args(["submodule", "update", "--init", "--recursive"]))?;
         if !status.success() {
             eprintln!("git submodule failed with status {}", status);
             return Err(XtaskError::CommandFailed);
         }
 
         let maketfa = self.fvp.join("maketfa.sh");
-        let status = Command::new(maketfa).status()?;
+        let status = run(&mut Command::new(maketfa))?;
         if !status.success() {
             eprintln!("maketfa.sh failed with status {}", status);
             return Err(XtaskError::CommandFailed);
