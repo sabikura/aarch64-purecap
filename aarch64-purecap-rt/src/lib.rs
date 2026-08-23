@@ -17,6 +17,7 @@
 //! ## Example
 //!
 //! ### `memory.x`
+//!
 //! ```
 //! MEMORY {
 //!     ram : ORIGIN = 0x80000800, LENGTH = 64M
@@ -26,6 +27,7 @@
 //! ```
 //!
 //! ### `main.rs`
+//!
 //! ```rust,ignore
 //! #![no_std]
 //! #![no_main]
@@ -53,6 +55,36 @@ pub use aarch64_purecap_rt_macros::entry;
 pub use aarch64_purecap_rt_macros::exception;
 mod cap_relocs;
 
+// If the platform boots in A64 mode, this enables first the capability intructions
+// then toggles the instruction set to C64 using the `bx 4` instruction
+// (DDI0606 Section 4.4.20)
+#[cfg(feature = "hybrid")]
+macro_rules! capability_shim {
+    () => {
+        r#"
+            .code a64
+            mrs x0, CPACR_EL1
+            // Enable floating point for EL1/0 (issue had in qemu)
+            orr x0, x0, #(3 << 20)
+            // Enable capability instructions for EL1/0
+            orr x0, x0, #(3 << 18)
+            msr CPACR_EL1, x0
+            isb
+            // Toggle the instruction set to C64 and enter purecap
+            bx #4
+            .code c64
+        "#
+    };
+}
+
+// Does nothing for platforms that boot into C64 mode
+#[cfg(not(feature = "hybrid"))]
+macro_rules! capability_shim {
+    () => {
+        ""
+    };
+}
+
 // Configure environment before jumping to the user defined function:
 // - stack pointer capability has the address set to __el1_stack_end and the bounds to
 //   __el1_stack_size
@@ -65,7 +97,10 @@ core::arch::global_asm!(
     .section .text._el1_entry, "ax"
     .global _el1_entry
     .type _el1_entry, %function
-    _el1_entry:
+    _el1_entry: 
+    "#,
+    capability_shim!(),
+    r#"
         // Configure SPSel to be 1 (exceptions use SP_EL1, not SP_EL0)
         // ARM DDI 0487; C5.2.18
         msr SPSel, #1

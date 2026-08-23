@@ -10,4 +10,8 @@ authors = ["Irina Nita <irina.nita@posteo.com>"]
 [dependencies]
 aarch64-purecap-rt-macros = { version = "0.1.0", path = "../aarch64-purecap-rt-macros" }
 
+[features]
+default = []
+hybrid = []
+
 [workspace]
