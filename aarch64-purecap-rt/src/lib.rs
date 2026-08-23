@@ -50,15 +50,22 @@
 //! ```
 
 #![no_std]
+#![feature(cfg_target_abi)]
 
+#[cfg(all(target_arch = "aarch64", target_abi = "purecap"))]
 pub use aarch64_purecap_rt_macros::entry;
+
+#[cfg(all(target_arch = "aarch64", target_abi = "purecap"))]
 pub use aarch64_purecap_rt_macros::exception;
+
+#[cfg(all(target_arch = "aarch64", target_abi = "purecap"))]
 mod cap_relocs;
 
 // If the platform boots in A64 mode, this enables first the capability intructions
 // then toggles the instruction set to C64 using the `bx 4` instruction
 // (DDI0606 Section 4.4.20)
 #[cfg(feature = "hybrid")]
+#[cfg(all(target_arch = "aarch64", target_abi = "purecap"))]
 macro_rules! capability_shim {
     () => {
         r#"
@@ -79,6 +86,7 @@ macro_rules! capability_shim {
 
 // Does nothing for platforms that boot into C64 mode
 #[cfg(not(feature = "hybrid"))]
+#[cfg(all(target_arch = "aarch64", target_abi = "purecap"))]
 macro_rules! capability_shim {
     () => {
         ""
@@ -91,6 +99,7 @@ macro_rules! capability_shim {
 // - vector table and entry point capabilities have the address set to __el1_vectors_start,
 //   and __el1_entry_start, respectively, and have the bounds derived from program counter
 //   capability (PCC)
+#[cfg(all(target_arch = "aarch64", target_abi = "purecap"))]
 core::arch::global_asm!(
     r#"
     .arch morello+c64
@@ -183,6 +192,7 @@ pub unsafe extern "C" fn __aarch64_purecap_rt_default_handler() -> ! {
 }
 
 // Configure the exception handler symbols as weak links to the default handler.
+#[cfg(all(target_arch = "aarch64", target_abi = "purecap"))]
 core::arch::global_asm!(
     r#"
     .weak __aarch64_purecap_rt_el0_sync
@@ -200,6 +210,7 @@ core::arch::global_asm!(
 );
 
 // Configure the EL1 vector table.
+#[cfg(all(target_arch = "aarch64", target_abi = "purecap"))]
 core::arch::global_asm!(
     r#"
     .arch morello+c64

@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-: "${CHERI_RUST:=$HOME/rust}"
+: "${CRABILITY_BIN:=$HOME/.crability/bin}"
 
-exec "$CHERI_RUST/build/x86_64-unknown-linux-gnu/stage1/bin/rustc" \
-    --sysroot="$CHERI_RUST/build/x86_64-unknown-linux-gnu/stage1" "$@"
+exec "$CRABILITY_BIN/rustc" "$@"

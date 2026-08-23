@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
-: "${CHERI_HOME:=$HOME/cheri}"
+: "${CRABILITY_BIN:=$HOME/.crability/bin}"
 
-exec "$CHERI_HOME/output/morello-sdk/bin/clang" "$@"
+exec "$CRABILITY_BIN/clang" "$@"

@@ -1,2 +1,9 @@
+[build]
+rustc = "./toolchain/rustc.sh"
+
+[target.aarch64-unknown-none-purecap]
+linker = "./toolchain/ld.sh"
+
 [alias]
-xtask = "run --package xtask --bin xtask --"
+check-rt = "check -p aarch64-purecap-rt --target aarch64-unknown-none-purecap"
+build-rt = "build -p aarch64-purecap-rt --target aarch64-unknown-none-purecap"

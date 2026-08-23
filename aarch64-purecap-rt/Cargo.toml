@@ -13,5 +13,3 @@ aarch64-purecap-rt-macros = { version = "0.1.0", path = "../aarch64-purecap-rt-m
 [features]
 default = []
 hybrid = []
-
-[workspace]

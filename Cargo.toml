@@ -2,6 +2,5 @@
 resolver = "2"
 members = [
     "aarch64-purecap-rt-macros",
-    "xtask",
+    "aarch64-purecap-rt",
 ]
-exclude = ["aarch64-purecap-rt", "aarch64-purecap-cpu", "examples/helloworld-morello-fvp"]
