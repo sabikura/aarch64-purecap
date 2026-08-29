@@ -1,5 +1,8 @@
 # aarch64-purecap-rt
 
+[![CI](https://github.com/sabikura/aarch64-purecap/actions/workflows/ci.yml/badge.svg)](https://github.com/sabikura/aarch64-purecap/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 Library for a simple startup routine for CHERI Aarch64 (ARM Morello architecture) pure capability bare-metal applications.
 
 ## Getting started
