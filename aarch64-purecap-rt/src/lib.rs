@@ -61,6 +61,8 @@ pub use aarch64_purecap_rt_macros::exception;
 #[cfg(all(target_arch = "aarch64", target_abi = "purecap"))]
 mod cap_relocs;
 
+mod grant;
+
 // If the platform boots in A64 mode, this enables first the capability intructions
 // then toggles the instruction set to C64 using the `bx 4` instruction
 // (DDI0606 Section 4.4.20)

@@ -9,6 +9,11 @@ use syn::{parse_macro_input, ItemFn, ReturnType, Type};
 /// to `__aarch64_purecap_rt_main`. The input TokenStream must be a function that returns never,
 /// is generic over nothing and has no arguments.
 pub fn process(args: TokenStream, input: TokenStream) -> TokenStream {
+    // #[entry(grant(
+    //     uart: Mmio<0x1c09_0000, 0x1000>,          // RW, no cap perms
+    //     heap: Heap<0x10_0000>,                    // RW + LoadCap/StoreCap
+    //     seal: SealRange<4, 8>,                    // a few otypes, per your table
+    // ))]
     let fun = parse_macro_input!(input as ItemFn);
     if !has_valid_signature(&fun) {
         return Error::new(fun.span(), "Function signature is not supported")
