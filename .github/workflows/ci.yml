@@ -34,4 +34,20 @@ jobs:
       HOME: /home/morello
     steps:
       - uses: actions/checkout@v4
-      - run: crability cargo check --target aarch64-unknown-none-purecap
+      - run: crability cargo check -p aarch64-purecap-rt --target aarch64-unknown-none-purecap
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    container:
+      image: ghcr.io/sabikura/crability-ci:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    env:
+      HOME: /home/morello
+    steps:
+      - uses: actions/checkout@v4
+      - run: crability cargo test

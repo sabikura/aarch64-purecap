@@ -32,7 +32,7 @@ dependencies = [
 [[package]]
 name = "cheri"
 version = "0.1.0"
-source = "git+https://github.com/sabikura/cheri-rs.git#bbc76d3ac4a99240737277a4b71cf06e2ada55bc"
+source = "git+https://github.com/sabikura/cheri-rs.git#a95c83f1bbad6bb880c49f6051883168087e4d98"
 dependencies = [
  "cheri-macros",
 ]
@@ -40,7 +40,7 @@ dependencies = [
 [[package]]
 name = "cheri-macros"
 version = "0.1.0"
-source = "git+https://github.com/sabikura/cheri-rs.git#bbc76d3ac4a99240737277a4b71cf06e2ada55bc"
+source = "git+https://github.com/sabikura/cheri-rs.git#a95c83f1bbad6bb880c49f6051883168087e4d98"
 dependencies = [
  "proc-macro2",
  "quote",

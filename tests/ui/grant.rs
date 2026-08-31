@@ -1,8 +1,6 @@
-use aarch64_purecap_rt::grant::MmioGrant;
 use aarch64_purecap_rt_macros::entry;
 
 struct UartRegisters;
-unsafe impl MmioGrant for UartRegisters {}
 
 #[entry(grant(
     heap: Heap<0x10_0000>,

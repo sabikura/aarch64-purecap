@@ -51,6 +51,7 @@
 
 #![no_std]
 #![feature(cfg_target_abi)]
+#![feature(strict_provenance)]
 
 #[cfg(all(target_arch = "aarch64", target_abi = "purecap"))]
 pub use aarch64_purecap_rt_macros::entry;
