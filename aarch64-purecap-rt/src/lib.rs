@@ -18,7 +18,7 @@
 //!
 //! ### `memory.x`
 //!
-//! ```
+//! ```ignore
 //! MEMORY {
 //!     ram : ORIGIN = 0x80000800, LENGTH = 64M
 //! }
@@ -61,7 +61,8 @@ pub use aarch64_purecap_rt_macros::exception;
 #[cfg(all(target_arch = "aarch64", target_abi = "purecap"))]
 mod cap_relocs;
 
-mod grant;
+// Has inner doc comment
+pub mod grant;
 
 // If the platform boots in A64 mode, this enables first the capability intructions
 // then toggles the instruction set to C64 using the `bx 4` instruction
@@ -116,6 +117,13 @@ core::arch::global_asm!(
         // ARM DDI 0487; C5.2.18
         msr SPSel, #1
 
+        // Exceptions taken to EL1 enter in C64 (CCTLR_EL1.C64E), the vector
+        // code is C64
+        mrs x0, CCTLR_EL1
+        orr x0, x0, #(1 << 5)
+        msr CCTLR_EL1, x0
+        isb
+
         // Configure the stack capability for EL1
 
         // Compute start address into x0
@@ -157,17 +165,6 @@ core::arch::global_asm!(
         add     c0, c0, x2
         mov     csp, c0
 
-        // Configure EL1 vector table (CVBAR_EL1)
-        // ARM DDI 0606; 3.2.48
-        //
-        // NOTE: The bounds for the CVBAR_EL1 are derived from the PCC with the base set to
-        //       the vector table start. Deriving from the PCC is done by first loading the current
-        //       program counter into c2, and modifying the address with scvalue, keeping the PCC
-        //       bounds unmodified.
-        ldr x0, =__el1_vectors_start
-        cvtd c0, x0
-        msr CVBAR_EL1, c0
-
         // Zero BSS out
         ldr x0, =__el1_bss_start
         cvtd c0, x0
@@ -183,7 +180,37 @@ core::arch::global_asm!(
         bl __init_cap_relocs
         isb
         dsb sy
-        b __aarch64_purecap_rt_main
+
+        // Build the restricted code capability: PCC derived, bounds set to
+        // [__el1_code_start, __el1_code_end), permissions reduced to
+        // Load, LoadCap, Execute, System, Executive, Global, MutableLoad.
+        // The clrperm mask is the same one the compiler uses for executable
+        // capabilities (cheri_init_globals.h, 0x13DBC).
+        ldr x0, =__el1_code_start
+        ldr x1, =__el1_code_end
+        sub x2, x1, x0
+        cvtp c0, x0
+        scbndse c0, c0, x2
+        mov x3, #0x3DBC
+        movk x3, #0x1, lsl #16
+        clrperm c0, c0, x3
+
+        // Configure EL1 vector table (CVBAR_EL1)
+        // ARM DDI 0606; 3.2.48
+        //
+        // Derived from the restricted code capability, not from DDC. Exception
+        // entry replaces PCC with this capability, so its bounds must cover the
+        // handlers as well, not only the table.
+        ldr x4, =__el1_vectors_start
+        scvalue c1, c0, x4
+        msr CVBAR_EL1, c1
+
+        // Enter main through a sealed entry to the restricted code capability.
+        // PCC bounds and permissions stay reduced from here on.
+        ldr x4, =__aarch64_purecap_rt_main
+        scvalue c0, c0, x4
+        seal c0, c0, rb
+        br c0
     "#
 );
 
@@ -312,3 +339,20 @@ core::arch::global_asm!(
         invalid_entry el0_a32_serror
     "#
 );
+
+/// Used by the entry function. Here because the assembly can be gated by ABI in this crate
+/// since it needs an unstable feature...
+#[doc(hidden)]
+pub fn __null_ddc() {
+    // FIXME: Maybe somehow I will figure out how to make trybuild work with a custom target.
+    #[cfg(all(target_arch = "aarch64", target_abi = "purecap"))]
+    // SAFETY: only clears authority, never creates it
+    unsafe {
+        core::arch::asm!(
+            "isb",
+            "msr DDC, czr",
+            "isb",
+            options(nomem, nostack, preserves_flags)
+        )
+    };
+}

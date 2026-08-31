@@ -1,0 +1,7 @@
+error: cannot construct `Grant` with struct literal syntax due to private fields
+ --> $WORKSPACE/tests/ui/grant-construct.rs
+  |
+  |     let _ = Grant {
+  |             ^^^^^
+  |
+  = note: ... and other private field `__private` that was not provided

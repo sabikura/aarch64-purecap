@@ -7,8 +7,21 @@ description = "Run-time support for pure capability applications on Arm Morello.
 repository = "https://codeberg.org/irinanita/aarch64-purecap"
 authors = ["Irina Nita <irina.nita@posteo.com>"]
 
+[lib]
+doctest = false
+
+[[test]]
+name = "entry"
+path = "../tests/entry.rs"
+
 [dependencies]
 aarch64-purecap-rt-macros = { version = "0.1.0", path = "../aarch64-purecap-rt-macros" }
+
+[target.'cfg(all(target_arch = "aarch64", target_abi = "purecap"))'.dependencies]
+cheri = { git = "https://github.com/sabikura/cheri-rs.git" }
+
+[dev-dependencies]
+trybuild = "=1.0.89"
 
 [features]
 default = []

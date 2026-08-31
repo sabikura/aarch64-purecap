@@ -1,0 +1,5 @@
+error: duplicate grant item `uart`
+ --> $WORKSPACE/tests/ui/duplicate-grant.rs
+  |
+  |     uart: Mmio<0x1f09_0000, UartRegisters>,
+  |     ^^^^

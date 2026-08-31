@@ -1,7 +1,12 @@
 INCLUDE memory.x
 
 SECTIONS {
+    /* PCC covered region. Instructions or PC-relative reads
+       must sit between __el1_code_start and __el1_code_end. Data
+       is reached through capabilities loaded from those slots, so it stays
+       outside. */
     .text : {
+        __el1_code_start = .;
         KEEP(*(.text._el1_entry))
         *(.text*)
     } > ram
@@ -12,7 +17,25 @@ SECTIONS {
         . = ALIGN(0x800);
     } > ram
 
-    .rodata : { *(.rodata*) } > ram
+    .got : {
+        *(.got)
+        *(.got.plt)
+    } > ram
+
+    /* Capability slots for internal globals. The compiler reads them
+       PC-relative like the .got, so they belong to the PCC region. They are
+       only written by __init_cap_relocs, through DDC, before DDC is nulled. */
+    .data.rel.ro : {
+        *(.data.rel.ro*)
+    } > ram
+
+    /* Read-only PC-relative (constant pools), so it stays inside the PCC
+       region. PCC has no Store permission, only writable memory is outside. */
+    .rodata : {
+        *(.rodata*)
+        . = ALIGN(4096);
+        __el1_code_end = .;
+    } > ram
 
     .__cap_relocs : {
         __cap_relocs_start = .;
@@ -38,6 +61,10 @@ SECTIONS {
         . = ALIGN(16);
         __el1_stack_end = .;
     } > ram
+
+    /* Start of the heap arena handed out by the heap grant. The length is the
+       const generic of the Heap grant, so only the start address is set here. */
+    PROVIDE(__el1_heap_start = __el1_stack_end);
 
     /DISCARD/ : { *(.comment) *(.eh_frame) }
 }

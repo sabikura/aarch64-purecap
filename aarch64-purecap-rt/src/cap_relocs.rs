@@ -73,12 +73,24 @@ pub unsafe extern "C" fn __init_cap_relocs() {
 
         let perms = entry.perms;
         let ptr = if (perms & FUNCTION_RELOC_FLAG) == FUNCTION_RELOC_FLAG {
-            // Derive the capability from PCC with the entry specified base address
+            // FIXME: This capability is computed once here and once in the entry assembly code.
+            //        Maybe make it into a global_asm macro.
+
+            // Derive the capability from PCC, bounded to the code region.
+            // Called functions run with PCC set to this capability, and they
+            // reach globals through the .got, so the bounds cover
+            // [__el1_code_start, __el1_code_end) and not only the function.
+            let code_start = code_start();
+            let code_len = code_end() - code_start;
             let mut ptr: *const u8;
             unsafe {
                 core::arch::asm!(
-                    "cvtp {cap:x}, {addr}",
+                    "cvtp {cap:x}, {base}",
+                    "scbndse {cap:x}, {cap:x}, {len}",
+                    "scvalue {cap:x}, {cap:x}, {addr}",
                     cap = out(reg) ptr,
+                    base = in(reg) code_start,
+                    len = in(reg) code_len,
                     addr = in(reg) entry.base + entry.offset,
                     options(nomem, nostack, preserves_flags),
                 );
@@ -138,6 +150,30 @@ pub unsafe extern "C" fn __init_cap_relocs() {
 
         *location = ptr;
     }
+}
+
+#[inline(always)]
+fn code_start() -> usize {
+    let mut tmp: *mut u8;
+    let start: usize;
+    unsafe {
+        core::arch::asm!("adrp {cap:x}, __el1_code_start", cap = out(reg) tmp, options(nomem, nostack, pure));
+        core::arch::asm!("add {cap:x}, {cap:x}, :lo12:__el1_code_start", cap = inout(reg) tmp, options(nomem, nostack, pure));
+        core::arch::asm!("gcvalue {val:x}, {cap:x}", val = out(reg) start, cap = in(reg) tmp, options(nomem, nostack, pure));
+    }
+    start
+}
+
+#[inline(always)]
+fn code_end() -> usize {
+    let mut tmp: *mut u8;
+    let end: usize;
+    unsafe {
+        core::arch::asm!("adrp {cap:x}, __el1_code_end", cap = out(reg) tmp, options(nomem, nostack, pure));
+        core::arch::asm!("add {cap:x}, {cap:x}, :lo12:__el1_code_end", cap = inout(reg) tmp, options(nomem, nostack, pure));
+        core::arch::asm!("gcvalue {val:x}, {cap:x}", val = out(reg) end, cap = in(reg) tmp, options(nomem, nostack, pure));
+    }
+    end
 }
 
 #[inline(always)]
