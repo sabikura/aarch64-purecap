@@ -2,7 +2,7 @@ use grant::Grant;
 use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span};
 use quote::quote;
-use syn::parse::{Error, Parse, ParseStream};
+use syn::parse::Error;
 use syn::spanned::Spanned;
 use syn::{parse_macro_input, ItemFn, ReturnType, Type};
 
@@ -24,6 +24,8 @@ pub fn process(args: TokenStream, input: TokenStream) -> TokenStream {
         Ok(tokens) => tokens,
         Err(err) => return err.into_compile_error().into(),
     };
+    let grant_instance = grant.instance_();
+    let grant_ident = Ident::new("grant", Span::call_site());
 
     let block = fun.block;
     let ident = Ident::new("__aarch64_purecap_rt_main", Span::call_site());
@@ -35,6 +37,11 @@ pub fn process(args: TokenStream, input: TokenStream) -> TokenStream {
         #[no_mangle]
         #[link_section = ".text"]
         pub unsafe extern "C" fn #ident() -> ! {
+            // Derive the granted capabilities from DDC, then null DDC. The grants
+            // are the only remaining authority over their regions.
+            #[allow(unused_variables)]
+            let #grant_ident = #grant_instance;
+            ::aarch64_purecap_rt::__null_ddc();
             #block
         }
     }

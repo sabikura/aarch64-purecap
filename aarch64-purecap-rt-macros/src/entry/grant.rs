@@ -41,6 +41,22 @@ impl Grant {
             }
         })
     }
+
+    /// Generate the `Grant` instance expression. Every item is derived from DDC,
+    /// so this has to run before DDC is nulled.
+    pub(crate) fn instance_(&self) -> proc_macro2::TokenStream {
+        let fields = self.items.iter().map(|item| {
+            let name = &item.name;
+            let ty = &item.ty;
+            quote! { #name: <::aarch64_purecap_rt::grant::#ty>::from_ddc() }
+        });
+
+        quote! {
+            Grant {
+                #(#fields),*
+            }
+        }
+    }
 }
 
 impl Parse for Grant {

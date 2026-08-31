@@ -1,0 +1,18 @@
+[package]
+name = "qemu-tests"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+# Detached from the parent workspace: this package only builds for the
+# purecap target and would break the host builds of the workspace.
+[workspace]
+
+[dependencies]
+aarch64-purecap-rt = { path = "../aarch64-purecap-rt", features = ["hybrid"] }
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
