@@ -73,9 +73,6 @@ impl<const ADDRESS: usize, T: Sized> From<Mmio<ADDRESS, T>> for *mut T {
 #[cfg(all(target_arch = "aarch64", target_abi = "purecap"))]
 impl<const SIZE: usize> From<Heap<SIZE>> for *mut u8 {
     fn from(_: Heap<SIZE>) -> Self {
-        extern "C" {
-            static __el1_heap_start: u8;
-        }
         let keep = Perms::GLOBAL
             | Perms::LOAD
             | Perms::STORE
@@ -83,8 +80,17 @@ impl<const SIZE: usize> From<Heap<SIZE>> for *mut u8 {
             | Perms::STORE_CAPABILITY
             | Perms::STORE_LOCAL;
 
-        // SAFETY: only the address of the linker symbol is taken, never its value
-        let start = unsafe { core::ptr::addr_of!(__el1_heap_start) } as usize;
+        // The address of the linker symbol is computed PC-relative. Referencing it as an
+        // extern static would emit a capability relocation against a linker script symbol,
+        // which crashes the Morello lld ("Bad section start symbol" assertion).
+        let mut tmp: *mut u8;
+        let start: usize;
+        // SAFETY: only computes the address of the symbol
+        unsafe {
+            core::arch::asm!("adrp {cap:x}, __el1_heap_base", cap = out(reg) tmp, options(nomem, nostack, pure));
+            core::arch::asm!("add {cap:x}, {cap:x}, :lo12:__el1_heap_base", cap = inout(reg) tmp, options(nomem, nostack, pure));
+            core::arch::asm!("gcvalue {val:x}, {cap:x}", val = out(reg) start, cap = in(reg) tmp, options(nomem, nostack, pure));
+        }
 
         cheri::ptr::default_data_mut::<u8>()
             .with_addr(start)

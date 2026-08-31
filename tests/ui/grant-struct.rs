@@ -12,6 +12,7 @@ struct UartRegisters {
 ))]
 fn start(grant: Grant) -> ! {
     let _: *mut UartRegisters = grant.uart;
+    let _: *mut u8 = grant.heap;
     loop {}
 }
 

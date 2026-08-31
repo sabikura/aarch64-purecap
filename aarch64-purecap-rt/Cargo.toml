@@ -26,3 +26,4 @@ trybuild = "=1.0.89"
 [features]
 default = []
 hybrid = []
+bump-alloc = []

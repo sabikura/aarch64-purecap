@@ -64,7 +64,7 @@ SECTIONS {
 
     /* Start of the heap arena handed out by the heap grant. The length is the
        const generic of the Heap grant, so only the start address is set here. */
-    PROVIDE(__el1_heap_start = __el1_stack_end);
+    PROVIDE(__el1_heap_base = __el1_stack_end);
 
     /DISCARD/ : { *(.comment) *(.eh_frame) }
 }

@@ -63,6 +63,9 @@ impl Grant {
         // Fields of the `Grant` struct which will be given to the user
         let grant_fields = self.items.iter().filter_map(|item| {
             let name = &item.name;
+            if item.name == "heap" {
+                return Some(quote! { pub(crate) #name: *mut u8 });
+            }
             let target = item.mmio_target()?;
             Some(quote! { pub(crate) #name: *mut #target })
         });
@@ -71,7 +74,9 @@ impl Grant {
         // const generics, so nothing has to be extracted here.
         let into_grant_fields = self.items.iter().filter_map(|item| {
             let name = &item.name;
-            item.mmio_target()?;
+            if item.name != "heap" {
+                item.mmio_target()?;
+            }
             Some(quote! { #name: self.#name.into() })
         });
 

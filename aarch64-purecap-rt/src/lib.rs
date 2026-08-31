@@ -65,6 +65,10 @@ mod cap_relocs;
 // Has inner doc comment
 pub mod grant;
 
+// Has inner doc comment
+#[cfg(feature = "bump-alloc")]
+pub mod alloc;
+
 // If the platform boots in A64 mode, this enables first the capability intructions
 // then toggles the instruction set to C64 using the `bx 4` instruction
 // (DDI0606 Section 4.4.20)
