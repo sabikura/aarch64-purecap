@@ -18,7 +18,7 @@
 //!
 //! ### `memory.x`
 //!
-//! ```
+//! ```ignore
 //! MEMORY {
 //!     ram : ORIGIN = 0x80000800, LENGTH = 64M
 //! }
@@ -61,7 +61,8 @@ pub use aarch64_purecap_rt_macros::exception;
 #[cfg(all(target_arch = "aarch64", target_abi = "purecap"))]
 mod cap_relocs;
 
-mod grant;
+// Has inner doc comment
+pub mod grant;
 
 // If the platform boots in A64 mode, this enables first the capability intructions
 // then toggles the instruction set to C64 using the `bx 4` instruction
